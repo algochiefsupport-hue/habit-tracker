@@ -1,20 +1,40 @@
 """
 Flask application server for Habit Tracker + Daily Task Planner.
+Supports both modular folder structure and flat root structure for easy cloud deployment.
 """
 
 import os
-from flask import Flask, render_template, send_from_directory, jsonify
+from flask import Flask, render_template, send_from_directory, jsonify, send_file
 from database import init_db
-from routes.auth_routes import auth_bp
-from routes.habit_routes import habit_bp
-from routes.task_routes import task_bp
-from routes.dashboard_routes import dashboard_bp
-from routes.insight_routes import insight_bp
-from routes.goal_routes import goal_bp
-from routes.settings_routes import settings_bp
+
+# Graceful import: works whether files are in routes/ folder or directly in root directory
+try:
+    from routes.auth_routes import auth_bp
+    from routes.habit_routes import habit_bp
+    from routes.task_routes import task_bp
+    from routes.dashboard_routes import dashboard_bp
+    from routes.insight_routes import insight_bp
+    from routes.goal_routes import goal_bp
+    from routes.settings_routes import settings_bp
+except ImportError:
+    from auth_routes import auth_bp
+    from habit_routes import habit_bp
+    from task_routes import task_bp
+    from dashboard_routes import dashboard_bp
+    from insight_routes import insight_bp
+    from goal_routes import goal_bp
+    from settings_routes import settings_bp
 
 def create_app():
-    app = Flask(__name__, static_folder='static', template_folder='templates')
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    templates_dir = os.path.join(base_dir, 'templates')
+    static_dir = os.path.join(base_dir, 'static')
+
+    app = Flask(
+        __name__,
+        static_folder=static_dir if os.path.exists(static_dir) else base_dir,
+        template_folder=templates_dir if os.path.exists(templates_dir) else base_dir
+    )
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'habit-tracker-secret-key-production-ready-2026')
     app.config['JSON_SORT_KEYS'] = False
 
@@ -32,7 +52,27 @@ def create_app():
 
     @app.route('/')
     def index():
-        return render_template('index.html')
+        index_in_templates = os.path.join(base_dir, 'templates', 'index.html')
+        if os.path.exists(index_in_templates):
+            return render_template('index.html')
+        return send_file(os.path.join(base_dir, 'index.html'))
+
+    # Universal static file router: handles both /static/css/main.css and root files
+    @app.route('/static/<path:filename>')
+    def serve_static(filename):
+        # 1. Try static folder if present
+        target_in_static = os.path.join(base_dir, 'static', filename)
+        if os.path.exists(target_in_static):
+            return send_from_directory(os.path.join(base_dir, 'static'), filename)
+
+        # 2. Try file by its basename in root
+        basename = os.path.basename(filename)
+        target_in_root = os.path.join(base_dir, basename)
+        if os.path.exists(target_in_root):
+            return send_from_directory(base_dir, basename)
+
+        # 3. Fallback direct match
+        return send_from_directory(base_dir, filename)
 
     @app.errorhandler(404)
     def not_found(e):
