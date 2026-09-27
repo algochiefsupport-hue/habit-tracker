@@ -1,0 +1,133 @@
+/* ==========================================================================
+   Habit Tracker + Daily Task Planner - Responsive Breakpoints & Mobile Layout
+   ========================================================================== */
+
+/* Mobile viewports (< 768px) */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-float);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 39;
+    display: none;
+  }
+
+  .sidebar-backdrop.active {
+    display: block;
+  }
+
+  .main-wrapper {
+    margin-left: 0 !important;
+  }
+
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  .btn-primary-quick span {
+    display: none;
+  }
+
+  .btn-primary-quick {
+    padding: 0.5rem;
+    border-radius: 50%;
+  }
+
+  .content-body {
+    padding: 1rem 1rem 6rem;
+  }
+
+  .bottom-nav {
+    display: flex !important;
+  }
+
+  .fab-quick-add {
+    bottom: 4.85rem;
+    right: 1.25rem;
+    width: 48px;
+    height: 48px;
+  }
+
+  .fab-menu {
+    bottom: 8.5rem;
+    right: 1.25rem;
+  }
+
+  .progress-hero-card {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    padding: 1.25rem;
+    gap: 1.25rem;
+  }
+
+  .progress-ring-container {
+    align-self: center;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .days-selector {
+    flex-wrap: wrap;
+  }
+
+  .day-btn {
+    min-width: 38px;
+  }
+
+  .modal-dialog {
+    max-height: 95vh;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    margin-top: auto;
+  }
+
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .calendar-day-cell {
+    min-height: 42px;
+  }
+}
+
+/* Tablet viewports (769px to 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  :root {
+    --sidebar-width: 220px;
+  }
+
+  .content-body {
+    padding: 1.5rem;
+  }
+}
+
+/* Touch targets accessibility for mobile */
+@media (pointer: coarse) {
+  .habit-check-btn, .task-check-btn {
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .nav-link {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .filter-chip {
+    padding: 0.5rem 0.95rem;
+  }
+}
