@@ -22,10 +22,19 @@ def get_insights_summary():
     total_habits = conn.execute("SELECT COUNT(*) as c FROM habits WHERE user_id = ?", (user_id,)).fetchone()['c']
     active_habits = conn.execute("SELECT COUNT(*) as c FROM habits WHERE user_id = ? AND status = 'active'", (user_id,)).fetchone()['c']
 
-    # Total completions count
-    total_completions = conn.execute(
+    # Total completions count for habits
+    total_habit_completions = conn.execute(
         "SELECT COUNT(*) as c FROM habit_completions WHERE user_id = ?", (user_id,)
     ).fetchone()['c']
+
+    # Total tasks and completed tasks
+    total_tasks = conn.execute("SELECT COUNT(*) as c FROM tasks WHERE user_id = ?", (user_id,)).fetchone()['c']
+    completed_tasks = conn.execute("SELECT COUNT(*) as c FROM tasks WHERE user_id = ? AND completed = 1", (user_id,)).fetchone()['c']
+    pending_tasks = total_tasks - completed_tasks
+    task_rate = round((completed_tasks / total_tasks * 100), 1) if total_tasks > 0 else 0.0
+
+    # Total combined completions (Habits + Tasks)
+    total_all_completions = total_habit_completions + completed_tasks
 
     # Habits list for performance table
     habit_rows = conn.execute("""
@@ -68,7 +77,16 @@ def get_insights_summary():
             if stats['best_streak'] > best_streak_overall:
                 best_streak_overall = stats['best_streak']
 
-    avg_completion_rate = round(total_rate_sum / active_count_for_rate, 1) if active_count_for_rate > 0 else 0.0
+    # Overall 30-day combined completion rate (Habits + Tasks)
+    total_items_30d = 0
+    completed_items_30d = 0
+    for i in range(30):
+        d = today_d - timedelta(days=i)
+        day_sum = get_day_summary(user_id, d)
+        total_items_30d += day_sum['total_items']
+        completed_items_30d += day_sum['completed_items']
+
+    overall_rate = round((completed_items_30d / total_items_30d * 100), 1) if total_items_30d > 0 else (round(total_rate_sum / active_count_for_rate, 1) if active_count_for_rate > 0 else 0.0)
 
     # Weekly Progress (last 7 days)
     weekly_data = []
@@ -81,7 +99,11 @@ def get_insights_summary():
             'day_full': d.strftime('%A, %b %d'),
             'percent': day_sum['percent'],
             'completed_items': day_sum['completed_items'],
-            'total_items': day_sum['total_items']
+            'total_items': day_sum['total_items'],
+            'habits_completed': day_sum['habits_completed'],
+            'habits_total': day_sum['habits_total'],
+            'tasks_completed': day_sum['tasks_completed'],
+            'tasks_total': day_sum['tasks_total']
         })
 
     # Activity Heatmap (last 60 days)
@@ -115,10 +137,15 @@ def get_insights_summary():
     return jsonify({
         'total_habits': total_habits,
         'active_habits': active_habits,
-        'total_completions': total_completions,
+        'total_completions': total_all_completions,
+        'habit_completions': total_habit_completions,
+        'total_tasks': total_tasks,
+        'completed_tasks': completed_tasks,
+        'pending_tasks': pending_tasks,
+        'task_completion_rate': task_rate,
         'current_overall_streak': max_streak_overall,
         'best_overall_streak': best_streak_overall,
-        'average_completion_rate': avg_completion_rate,
+        'average_completion_rate': overall_rate,
         'weekly_progress': weekly_data,
         'heatmap': heatmap_data,
         'habit_performance': habit_performance

@@ -18,13 +18,36 @@ const Insights = {
   render() {
     if (!this.data) return;
 
-    // Overview Metric Badges
+    // Overview Metric Badges (Combined Habits + Tasks)
     document.getElementById('statTotalHabits').textContent = this.data.total_habits || 0;
     document.getElementById('statActiveHabits').textContent = this.data.active_habits || 0;
     document.getElementById('statTotalCompletions').textContent = this.data.total_completions || 0;
     document.getElementById('statCurrentStreak').textContent = `🔥 ${this.data.current_overall_streak || 0}d`;
     document.getElementById('statBestStreak').textContent = `🏆 ${this.data.best_overall_streak || 0}d`;
     document.getElementById('statAvgRate').textContent = `${this.data.average_completion_rate || 0}%`;
+
+    // Tasks Performance Card
+    const totalTasksEl = document.getElementById('statTotalTasks');
+    const compTasksEl = document.getElementById('statCompletedTasks');
+    const pendTasksEl = document.getElementById('statPendingTasks');
+    const habitChecksEl = document.getElementById('statHabitCompletions');
+    const taskRateBadge = document.getElementById('statTaskRateBadge');
+
+    if (totalTasksEl) totalTasksEl.textContent = this.data.total_tasks || 0;
+    if (compTasksEl) compTasksEl.textContent = this.data.completed_tasks || 0;
+    if (pendTasksEl) pendTasksEl.textContent = this.data.pending_tasks || 0;
+    if (habitChecksEl) habitChecksEl.textContent = this.data.habit_completions || 0;
+    if (taskRateBadge) {
+      taskRateBadge.textContent = `${this.data.task_completion_rate || 0}% Done`;
+      if (this.data.task_completion_rate >= 80) {
+        taskRateBadge.className = 'priority-pill priority-low';
+        taskRateBadge.style.color = 'var(--accent-primary)';
+      } else if (this.data.task_completion_rate >= 50) {
+        taskRateBadge.className = 'priority-pill priority-medium';
+      } else {
+        taskRateBadge.className = 'priority-pill priority-high';
+      }
+    }
 
     // Render Weekly Bar Graph (Last 7 Days)
     const weeklyContainer = document.getElementById('insightsWeeklyBars');
