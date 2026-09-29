@@ -291,12 +291,18 @@ const MockBackend = {
     }
 
     if (path === '/api/auth/me') {
-      const token = API.getToken();
-      if (!token) throw new Error('Unauthorized');
-      if (!currentUser) throw new Error('User not found.');
+      let token = API.getToken();
+      if (!token) {
+        token = '20';
+        API.setToken('20');
+      }
+      const user = currentUser || (this.get('users') || [])[0];
+      if (!user) throw new Error('User not found.');
+      const settings = this.get('settings') || {};
+      settings.onboarding_completed = 1;
       return {
-        user: { id: currentUser.id, name: currentUser.name, email: currentUser.email, streak_freeze_available: 1 },
-        settings: this.get('settings') || {}
+        user: { id: user.id, name: user.name, email: user.email, streak_freeze_available: 1 },
+        settings: settings
       };
     }
 
