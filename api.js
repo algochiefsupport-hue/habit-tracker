@@ -20,6 +20,11 @@ const MockBackend = {
   set(table, val) {
     try {
       localStorage.setItem('mock_db_' + table, JSON.stringify(val));
+      if (['habits', 'tasks', 'goals', 'completions', 'settings'].includes(table)) {
+        if (window.FirebaseSync) {
+          window.FirebaseSync.scheduleSync();
+        }
+      }
     } catch (e) {
       console.warn("Storage quota exceeded or error:", e);
     }
@@ -283,6 +288,9 @@ const MockBackend = {
         throw new Error('Invalid email or password.');
       }
       API.setToken(String(user.id));
+      if (window.FirebaseSync) {
+        window.FirebaseSync.syncFromCloud(email);
+      }
       return {
         message: 'Logged in successfully.',
         user: { id: user.id, name: user.name, email: user.email },

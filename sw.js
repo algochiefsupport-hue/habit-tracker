@@ -3,7 +3,7 @@
  * Enables 100% offline functionality, instant loading, and PWA installation.
  */
 
-const CACHE_NAME = 'habitpulse-v1.0.2';
+const CACHE_NAME = 'habitpulse-v1.0.3';
 
 const STATIC_ASSETS = [
   './',
@@ -12,6 +12,7 @@ const STATIC_ASSETS = [
   'main.css',
   'components.css',
   'responsive.css',
+  'firebase-sync.js',
   'api.js',
   'audio.js',
   'notifications.js',

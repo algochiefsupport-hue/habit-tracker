@@ -2169,6 +2169,49 @@ ul, ol {
             </form>
           </div>
 
+          <!-- Google Firebase Cloud Sync -->
+          <div class="card" style="margin-bottom: 1.5rem; border-color: rgba(16, 185, 129, 0.4); background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(16, 185, 129, 0.04) 100%);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.35rem;">☁️</span>
+                <div>
+                  <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0;">Google Firebase Cloud Sync</h3>
+                  <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem;">Multi-device sync & lost phone recovery</div>
+                </div>
+              </div>
+              <div id="cloudSyncStatusBadge">
+                <span style="display: inline-flex; align-items: center; gap: 0.35rem; color: #10b981; font-size: 0.75rem;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+                  Ready to Connect
+                </span>
+              </div>
+            </div>
+            <div style="font-size: 0.825rem; color: var(--text-secondary); margin-bottom: 0.85rem; line-height: 1.5;">
+              Connect your free Google Firebase project. Your habits, daily tasks, and streaks will automatically back up to Google Cloud so if your phone is lost or you change devices, logging in restores everything!
+            </div>
+
+            <!-- Firebase Config Box -->
+            <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+              <textarea id="firebaseConfigInput" class="form-input" style="font-family: monospace; font-size: 0.75rem; height: 95px; resize: vertical;" placeholder='Paste your firebaseConfig from Firebase Console:
+{
+  "apiKey": "AIzaSy...",
+  "authDomain": "your-app.firebaseapp.com",
+  "projectId": "your-app",
+  "storageBucket": "your-app.appspot.com",
+  "messagingSenderId": "...",
+  "appId": "..."
+}'></textarea>
+              <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn-primary-quick" onclick="handleSaveFirebaseConfig()" style="font-size: 0.825rem; padding: 0.5rem 1rem;">
+                  <span>💾 Save & Connect Cloud</span>
+                </button>
+                <button type="button" class="btn-secondary" onclick="window.FirebaseSync && window.FirebaseSync.syncToCloud()" style="font-size: 0.825rem; padding: 0.5rem 1rem;">
+                  <span>🔄 Sync Now</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Notifications & Reminders -->
           <div class="card" style="margin-bottom: 1.5rem;">
             <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem;">Notifications & Reminders</h3>
@@ -2777,6 +2820,11 @@ ul, ol {
   <!-- Toast Container -->
   <div id="toastContainer" class="toast-container"></div>
 
+  <!-- Google Firebase SDKs (Real-time Cloud Sync & Lost Phone Recovery) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-sync.js"></script>
+
   <!-- App Scripts -->
   <script src="api.js"></script>
   <script src="audio.js"></script>
@@ -2792,6 +2840,54 @@ ul, ol {
   <script src="settings.js"></script>
   <script src="onboarding.js"></script>
   <script src="app.js"></script>
+
+  <!-- Firebase Cloud Config Handler -->
+  <script>
+    function handleSaveFirebaseConfig() {
+      const input = document.getElementById('firebaseConfigInput');
+      if (!input || !input.value.trim()) {
+        if (window.Toast) Toast.error("Please paste your firebaseConfig from Firebase Console.");
+        return;
+      }
+      try {
+        let clean = input.value.trim();
+        if (clean.includes('{') && clean.includes('}')) {
+          clean = clean.substring(clean.indexOf('{'), clean.lastIndexOf('}') + 1);
+        }
+        clean = clean.replace(/([a-zA-Z0-9_]+)\s*:/g, '"$1":').replace(/'/g, '"');
+        clean = clean.replace(/,\s*([}\]])/g, '$1');
+        const parsed = JSON.parse(clean);
+        if (!parsed.apiKey || !parsed.projectId) {
+          if (window.Toast) Toast.error("Invalid config: apiKey and projectId are required.");
+          return;
+        }
+        if (window.FirebaseSync) {
+          const success = window.FirebaseSync.saveConfig(parsed);
+          if (success) {
+            if (window.Toast) Toast.success("☁️ Google Firebase connected! Backing up data now...");
+            window.FirebaseSync.syncToCloud();
+          } else {
+            if (window.Toast) Toast.error("Could not initialize Firebase. Please check your credentials.");
+          }
+        }
+      } catch (err) {
+        if (window.Toast) Toast.error("Invalid JSON format. Please paste valid configuration.");
+      }
+    }
+
+    // Prefill config from FirebaseSync
+    window.addEventListener('load', () => {
+      try {
+        const input = document.getElementById('firebaseConfigInput');
+        if (input && window.FirebaseSync) {
+          const cfg = window.FirebaseSync.getConfig();
+          if (cfg) {
+            input.value = JSON.stringify(cfg, null, 2);
+          }
+        }
+      } catch (e) {}
+    });
+  </script>
 
   <!-- 100% Offline PWA Service Worker & Install Handler -->
   <script>
