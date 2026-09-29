@@ -20,7 +20,7 @@ const MockBackend = {
   set(table, val) {
     try {
       localStorage.setItem('mock_db_' + table, JSON.stringify(val));
-      if (['habits', 'tasks', 'goals', 'completions', 'settings'].includes(table)) {
+      if (['habits', 'tasks', 'goals', 'completions', 'settings', 'users'].includes(table)) {
         if (window.FirebaseSync) {
           window.FirebaseSync.scheduleSync();
         }
@@ -272,6 +272,9 @@ const MockBackend = {
       users.push(newUser);
       this.set('users', users);
       API.setToken(String(newUser.id));
+      if (window.FirebaseSync) {
+        window.FirebaseSync.syncToCloud();
+      }
       return {
         message: 'Account created successfully.',
         user: { id: newUser.id, name: newUser.name, email: newUser.email },
@@ -283,13 +286,39 @@ const MockBackend = {
       const { email, password } = body || {};
       if (!email || !password) throw new Error('Email and password are required.');
       const users = this.get('users') || [];
-      const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+      let user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+      // If user not in local storage (e.g. logging into a new phone), check Firebase Cloud!
+      if ((!user || user.password !== password) && window.FirebaseSync) {
+        try {
+          if (!window.FirebaseSync.isInitialized) window.FirebaseSync.init();
+          if (window.FirebaseSync.db) {
+            const doc = await window.FirebaseSync.db.collection('habit_pulse_users').doc(email.toLowerCase().trim()).get();
+            if (doc.exists) {
+              const cloudData = doc.data();
+              if (cloudData.user && cloudData.user.password === password) {
+                user = cloudData.user;
+                const existingIdx = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
+                if (existingIdx >= 0) {
+                  users[existingIdx] = user;
+                } else {
+                  users.push(user);
+                }
+                this.set('users', users);
+              }
+            }
+          }
+        } catch (cloudErr) {
+          console.warn('Firebase cloud lookup warning:', cloudErr);
+        }
+      }
+
       if (!user || user.password !== password) {
         throw new Error('Invalid email or password.');
       }
       API.setToken(String(user.id));
       if (window.FirebaseSync) {
-        window.FirebaseSync.syncFromCloud(email);
+        await window.FirebaseSync.syncFromCloud(email);
       }
       return {
         message: 'Logged in successfully.',

@@ -3,7 +3,7 @@
  * Enables 100% offline functionality, instant loading, and PWA installation.
  */
 
-const CACHE_NAME = 'habitpulse-v1.0.3';
+const CACHE_NAME = 'habitpulse-v1.0.4';
 
 const STATIC_ASSETS = [
   './',

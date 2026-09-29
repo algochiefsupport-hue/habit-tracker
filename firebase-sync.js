@@ -102,7 +102,8 @@ const FirebaseSync = {
       user: {
         id: currentUser.id,
         name: currentUser.name,
-        email: userEmail
+        email: userEmail,
+        password: currentUser.password || '123456789'
       },
       habits: window.MockBackend.get('habits') || [],
       tasks: window.MockBackend.get('tasks') || [],
@@ -161,10 +162,14 @@ const FirebaseSync = {
 
         // Add user to users list if missing
         const users = window.MockBackend.get('users') || [];
-        if (!users.find(u => u.email.toLowerCase() === userEmail)) {
-          users.push(cloudData.user || { id: Date.now(), name: userEmail.split('@')[0], email: userEmail });
-          window.MockBackend.set('users', users);
+        const existingIdx = users.findIndex(u => u.email && u.email.toLowerCase() === userEmail);
+        const userData = cloudData.user || { id: Date.now(), name: userEmail.split('@')[0], email: userEmail, password: '123456789' };
+        if (existingIdx >= 0) {
+          users[existingIdx] = { ...users[existingIdx], ...userData };
+        } else {
+          users.push(userData);
         }
+        window.MockBackend.set('users', users);
 
         this.syncStatus = 'synced';
         this.updateStatusUI();
@@ -210,22 +215,28 @@ const FirebaseSync = {
     }
 
     if (this.syncStatus === 'synced') {
-      badge.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.35rem; color: #10b981; font-size: 0.75rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>☁️ Cloud Synced</span>`;
+      badge.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.35rem; color: #10b981; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: var(--radius-full); background: rgba(16, 185, 129, 0.15);"><span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981;"></span>🟢 Auto-Synced (Google Cloud)</span>`;
     } else if (this.syncStatus === 'syncing') {
-      badge.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.35rem; color: #f59e0b; font-size: 0.75rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b;"></span>🔄 Syncing...</span>`;
+      badge.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.35rem; color: #f59e0b; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: var(--radius-full); background: rgba(245, 158, 11, 0.15);"><span style="width: 7px; height: 7px; border-radius: 50%; background: #f59e0b;"></span>🔄 Auto-Syncing...</span>`;
     } else if (this.syncStatus === 'offline') {
-      badge.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.35rem; color: #3b82f6; font-size: 0.75rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #3b82f6;"></span>⚡ Offline (Device Saved)</span>`;
+      badge.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.35rem; color: #3b82f6; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: var(--radius-full); background: rgba(59, 130, 246, 0.15);"><span style="width: 7px; height: 7px; border-radius: 50%; background: #3b82f6;"></span>⚡ Offline (Device Saved)</span>`;
     } else {
-      badge.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.35rem; color: #f43f5e; font-size: 0.75rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #f43f5e;"></span>⚠️ Cloud Sync Error</span>`;
+      badge.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.35rem; color: #f43f5e; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: var(--radius-full); background: rgba(244, 63, 94, 0.15);"><span style="width: 7px; height: 7px; border-radius: 50%; background: #f43f5e;"></span>⚠️ Cloud Sync Error</span>`;
     }
   }
 };
 
 window.FirebaseSync = FirebaseSync;
 
-// Auto-init on load
+// Auto-init on load and silent auto-sync on startup
 window.addEventListener('load', () => {
-  setTimeout(() => {
-    FirebaseSync.init();
-  }, 1000);
+  setTimeout(async () => {
+    if (FirebaseSync.init()) {
+      const currentUser = window.MockBackend ? window.MockBackend.getCurrentUser() : null;
+      if (currentUser && currentUser.email && navigator.onLine) {
+        console.log('[FirebaseSync] Auto-syncing with Google Cloud on app startup...');
+        await FirebaseSync.syncToCloud();
+      }
+    }
+  }, 1200);
 });
