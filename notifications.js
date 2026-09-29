@@ -44,7 +44,7 @@ const NotificationManager = {
         Toast.success("Notifications enabled! You'll receive gentle daily reminders.");
         this.sendNotification("Habit Tracker", {
           body: "Notifications are active. We'll help you stay consistent!",
-          icon: "/static/icons/logo.png"
+          icon: "static/icons/logo.png"
         });
       } else {
         Toast.info("Notifications were declined. The app will continue working normally.");
@@ -60,8 +60,8 @@ const NotificationManager = {
     if ('Notification' in window && Notification.permission === 'granted') {
       try {
         new Notification(title, {
-          icon: '/static/icons/logo.png',
-          badge: '/static/icons/badge.png',
+          icon: 'static/icons/logo.png',
+          badge: 'static/icons/badge.png',
           ...options
         });
       } catch (e) {
