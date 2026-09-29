@@ -3,33 +3,29 @@
  * Enables 100% offline functionality, instant loading, and PWA installation.
  */
 
-const CACHE_NAME = 'habitpulse-v1.0.1';
+const CACHE_NAME = 'habitpulse-v1.0.2';
 
 const STATIC_ASSETS = [
   './',
   'index.html',
-  'static/manifest.json',
-  'static/icons/icon-192.png',
-  'static/icons/icon-512.png',
-  'static/icons/logo.png',
-  'static/icons/badge.png',
-  'static/css/main.css',
-  'static/css/components.css',
-  'static/css/responsive.css',
-  'static/js/api.js',
-  'static/js/audio.js',
-  'static/js/notifications.js',
-  'static/js/auth.js',
-  'static/js/dashboard.js',
-  'static/js/habits.js',
-  'static/js/tasks.js',
-  'static/js/tomorrow.js',
-  'static/js/calendar.js',
-  'static/js/insights.js',
-  'static/js/goals.js',
-  'static/js/settings.js',
-  'static/js/onboarding.js',
-  'static/js/app.js'
+  'manifest.json',
+  'main.css',
+  'components.css',
+  'responsive.css',
+  'api.js',
+  'audio.js',
+  'notifications.js',
+  'auth.js',
+  'dashboard.js',
+  'habits.js',
+  'tasks.js',
+  'tomorrow.js',
+  'calendar.js',
+  'insights.js',
+  'goals.js',
+  'settings.js',
+  'onboarding.js',
+  'app.js'
 ];
 
 // Install: Cache all static assets for offline use
